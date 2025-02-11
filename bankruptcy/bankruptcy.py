@@ -19,6 +19,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 def outlier_replace(df, x_cols):
     for xc in x_cols:
         try:
+            # 이진 데이터의 경우 이상치 처리에서 제외
             if df[xc].nunique() <= 2:
                 continue
 
@@ -27,6 +28,8 @@ def outlier_replace(df, x_cols):
             IQR = Q3 - Q1
             lower_bound = Q1 - 1.5 * IQR
             upper_bound = Q3 + 1.5 * IQR
+
+            # 컬럼 자료형이 정수형인 경우 대체값을 정수형으로 형변환.
             if df[xc].dtype.kind == 'i':
                 lower_bound = int(lower_bound)
                 upper_bound = int(upper_bound)
@@ -239,7 +242,7 @@ def dnn_model_build(input_num, unit_list, drop_rate=0):
 
 
 
-
+# XGBoost 모델 파라미터 딕셔너리
 xgb_param = {
     'n_estimators': np.linspace(50, 500, 6).astype(int),
     'max_depth': np.linspace(3, 8, 5).astype(int),
@@ -249,6 +252,7 @@ xgb_param = {
     'gamma': np.linspace(0, 5.0, 10),
 }
 
+# DNN 모델 파라미터 딕셔너리
 dnn_parm = {
     'epochs': [20, 30, 50, 100], 
     'batch_size': [2, 4, 8, 16, 32, 64], 
@@ -256,8 +260,8 @@ dnn_parm = {
 }
 
 
+# 모델 학습 함수
 def model_learning(data_list, df_y, sampling="SMOTE"):
-    
     # GPU 메모리 증가 허용 설정
     physical_devices = tf.config.list_physical_devices('GPU')
     if physical_devices:
@@ -362,13 +366,18 @@ def main():
     df_pca1 = df_pca1.to_numpy()
     df_y = df_y.to_numpy().astype('int')
 
+    # 다중공선성을 제거한 데이터셋 리스트
     data_list = [
         [df_droped, 'not_pca', df_droped_cols],
         [df_pca1, 'pca1', df_cnt],
         [df_pca2, 'pca2', pca_num],
         [df_pca3, 'pca3', n_components_optimal]
     ]
-    # model_learning(data_list, df_y)
+
+    # 오버샘플링 방식 모델학습
+    model_learning(data_list, df_y)
+
+    # 언더샘플링 방식 모델학습
     model_learning(data_list, df_y, sampling='udersampling')
 
 
