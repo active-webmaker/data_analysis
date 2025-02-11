@@ -402,9 +402,11 @@ def grid_srch(model, param_dict, random_search=None, grid_rate=0.5, grid_num=5):
                     best_range = best_range.astype(int)
                 
             except Exception as e:
-                best_range = best_param
+                best_range = [best_param,]
 
             grid_param_dict[key] = best_range
+
+        param_dict = grid_param_dict.copy()
 
     # 그리드 서치 수행 (세밀한 탐색)
     grid_search = GridSearchCV(
